@@ -35,9 +35,9 @@ RUN curl -L -o /comfyui/models/vae/sdxl_vae.safetensors \
 
 # Modelo 3: CyberRealistic Pony (semi-realismo + anatomía detallada, Pony flavor)
 RUN curl -L -o /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
-    https://huggingface.co/cyberdelia/CyberRealisticPony/resolve/main/CyberRealisticPony_V16.0.safetensors \
+    https://civitai.com/api/download/models/2581228 \
     || wget -O /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
-    https://huggingface.co/cyberdelia/CyberRealisticPony/resolve/main/CyberRealisticPony_V16.0.safetensors
+    https://civitai.com/api/download/models/2581228
 
 # Modelo 4: DreamShaper XL (artístico, ilustración, fantasía, versátil)
 # RUN curl -L -o /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
