@@ -16,16 +16,16 @@ RUN curl -L -o /comfyui/models/vae/sdxl_vae.safetensors \
 
 # Flux.1-dev (modelo top para calidad general, cine, arte y realismo premium)
 # Archivo oficial ~23.8 GB - requiere mucho espacio y VRAM
-RUN curl -L -o /comfyui/models/checkpoints/flux1-dev.safetensors \
-    https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors || \
-    wget -O /comfyui/models/checkpoints/flux1-dev.safetensors \
-    https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors
+# RUN curl -L -o /comfyui/models/checkpoints/flux1-dev.safetensors \
+#     https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors || \
+#     wget -O /comfyui/models/checkpoints/flux1-dev.safetensors \
+#     https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors
 
 # Modelo 1: Juggernaut XL Ragnarok (cine / realismo dramático)
-# RUN curl -L -o /comfyui/models/checkpoints/juggernautXL_ragnarokBy.safetensors \
-#     https://huggingface.co/xxiaogui/hongchao/resolve/main/juggernautXL_ragnarokBy.safetensors || \
-#     wget -O /comfyui/models/checkpoints/juggernautXL_ragnarokBy.safetensors \
-#     https://huggingface.co/xxiaogui/hongchao/resolve/main/juggernautXL_ragnarokBy.safetensors
+RUN curl -L -o /comfyui/models/checkpoints/juggernautXL_ragnarokBy.safetensors \
+    https://huggingface.co/xxiaogui/hongchao/resolve/main/juggernautXL_ragnarokBy.safetensors || \
+    wget -O /comfyui/models/checkpoints/juggernautXL_ragnarokBy.safetensors \
+    https://huggingface.co/xxiaogui/hongchao/resolve/main/juggernautXL_ragnarokBy.safetensors
 
 # Modelo 2: Pony Diffusion V6 XL (anime, semi-realismo, versatilidad Pony)
 # RUN curl -L -o /comfyui/models/checkpoints/ponyDiffusionV6XL.safetensors \
