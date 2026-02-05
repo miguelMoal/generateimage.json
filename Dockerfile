@@ -34,16 +34,16 @@ RUN curl -L -o /comfyui/models/vae/sdxl_vae.safetensors \
 #     https://huggingface.co/Polenov2024/Pony-Diffusion-V6-XL/resolve/main/model.safetensors
 
 # Modelo 3: CyberRealistic Pony (semi-realismo + anatomía detallada, Pony flavor)
-RUN curl -L -o /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
-    https://civitai.com/api/download/models/2581228 \
-    || wget -O /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
-    https://civitai.com/api/download/models/2581228
+# RUN curl -L -o /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
+#     https://civitai.com/api/download/models/2581228 \
+#     || wget -O /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
+#     https://civitai.com/api/download/models/2581228
 
 # Modelo 4: DreamShaper XL (artístico, ilustración, fantasía, versátil)
-# RUN curl -L -o /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
-#     https://huggingface.co/Lykon/dreamshaper-xl-v2-turbo/resolve/main/DreamShaperXL_Turbo_v2.safetensors || \
-#     wget -O /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
-#     https://huggingface.co/Lykon/dreamshaper-xl-v2-turbo/resolve/main/DreamShaperXL_Turbo_v2.safetensors
+RUN curl -L -o /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
+    https://huggingface.co/Lykon/dreamshaper-xl-v2-turbo/resolve/main/DreamShaperXL_Turbo_v2.safetensors || \
+    wget -O /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
+    https://huggingface.co/Lykon/dreamshaper-xl-v2-turbo/resolve/main/DreamShaperXL_Turbo_v2.safetensors
 
 # Chequeo final (aparece en logs del build para verificar que todo se descargó bien)
 RUN echo "Modelos descargados en checkpoints:" && \
