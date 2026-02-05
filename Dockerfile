@@ -28,16 +28,16 @@ RUN curl -L -o /comfyui/models/vae/sdxl_vae.safetensors \
 #     https://huggingface.co/xxiaogui/hongchao/resolve/main/juggernautXL_ragnarokBy.safetensors
 
 # Modelo 2: Pony Diffusion V6 XL (anime, semi-realismo, versatilidad Pony)
-RUN curl -L -o /comfyui/models/checkpoints/ponyDiffusionV6XL.safetensors \
-    https://huggingface.co/Polenov2024/Pony-Diffusion-V6-XL/resolve/main/model.safetensors || \
-    wget -O /comfyui/models/checkpoints/ponyDiffusionV6XL.safetensors \
-    https://huggingface.co/Polenov2024/Pony-Diffusion-V6-XL/resolve/main/model.safetensors
+# RUN curl -L -o /comfyui/models/checkpoints/ponyDiffusionV6XL.safetensors \
+#     https://huggingface.co/Polenov2024/Pony-Diffusion-V6-XL/resolve/main/model.safetensors || \
+#     wget -O /comfyui/models/checkpoints/ponyDiffusionV6XL.safetensors \
+#     https://huggingface.co/Polenov2024/Pony-Diffusion-V6-XL/resolve/main/model.safetensors
 
 # Modelo 3: CyberRealistic Pony (semi-realismo + anatomía detallada, Pony flavor)
-# RUN curl -L -o /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
-#     https://huggingface.co/cyberdelia/CyberRealisticPony/resolve/main/cyberrealisticPony_v160.safetensors || \
-#     wget -O /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
-#     https://huggingface.co/cyberdelia/CyberRealisticPony/resolve/main/cyberrealisticPony_v160.safetensors
+RUN curl -L -o /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
+    https://huggingface.co/cyberdelia/CyberRealisticPony/resolve/main/CyberRealisticPony_V16.0.safetensors \
+    || wget -O /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
+    https://huggingface.co/cyberdelia/CyberRealisticPony/resolve/main/CyberRealisticPony_V16.0.safetensors
 
 # Modelo 4: DreamShaper XL (artístico, ilustración, fantasía, versátil)
 # RUN curl -L -o /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
