@@ -16,34 +16,22 @@ RUN curl -L -o /comfyui/models/vae/sdxl_vae.safetensors \
 
 # Flux.1-dev (modelo top para calidad general, cine, arte y realismo premium)
 # Archivo oficial ~23.8 GB - requiere mucho espacio y VRAM
-# RUN curl -L -o /comfyui/models/checkpoints/flux1-dev.safetensors \
-#     https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors || \
-#     wget -O /comfyui/models/checkpoints/flux1-dev.safetensors \
-#     https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors
+RUN curl -L -o /comfyui/models/checkpoints/flux1-dev.safetensors \
+    https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors || \
+    wget -O /comfyui/models/checkpoints/flux1-dev.safetensors \
+    https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors
 
 # Modelo 1: Juggernaut XL Ragnarok (cine / realismo dramático)
-# RUN curl -L -o /comfyui/models/checkpoints/juggernautXL_ragnarokBy.safetensors \
-#     https://huggingface.co/xxiaogui/hongchao/resolve/main/juggernautXL_ragnarokBy.safetensors || \
-#     wget -O /comfyui/models/checkpoints/juggernautXL_ragnarokBy.safetensors \
-#     https://huggingface.co/xxiaogui/hongchao/resolve/main/juggernautXL_ragnarokBy.safetensors
-
-# Modelo 2: Pony Diffusion V6 XL (anime, semi-realismo, versatilidad Pony)
-RUN curl -L -o /comfyui/models/checkpoints/ponyDiffusionV6XL.safetensors \
-    https://huggingface.co/Polenov2024/Pony-Diffusion-V6-XL/resolve/main/model.safetensors || \
-    wget -O /comfyui/models/checkpoints/ponyDiffusionV6XL.safetensors \
-    https://huggingface.co/Polenov2024/Pony-Diffusion-V6-XL/resolve/main/model.safetensors
-
-# Modelo 3: CyberRealistic Pony (semi-realismo + anatomía detallada, Pony flavor)
-# RUN curl -L -o /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
-#     https://huggingface.co/cyberdelia/CyberRealisticPony/resolve/main/cyberrealisticPony_v160.safetensors || \
-#     wget -O /comfyui/models/checkpoints/cyberrealistic_pony.safetensors \
-#     https://huggingface.co/cyberdelia/CyberRealisticPony/resolve/main/cyberrealisticPony_v160.safetensors
+RUN curl -L -o /comfyui/models/checkpoints/juggernautXL_ragnarokBy.safetensors \
+    https://huggingface.co/xxiaogui/hongchao/resolve/main/juggernautXL_ragnarokBy.safetensors || \
+    wget -O /comfyui/models/checkpoints/juggernautXL_ragnarokBy.safetensors \
+    https://huggingface.co/xxiaogui/hongchao/resolve/main/juggernautXL_ragnarokBy.safetensors
 
 # Modelo 4: DreamShaper XL (artístico, ilustración, fantasía, versátil)
-# RUN curl -L -o /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
-#     https://huggingface.co/Lykon/dreamshaper-xl-v2-turbo/resolve/main/DreamShaperXL_Turbo_v2.safetensors || \
-#     wget -O /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
-#     https://huggingface.co/Lykon/dreamshaper-xl-v2-turbo/resolve/main/DreamShaperXL_Turbo_v2.safetensors
+RUN curl -L -o /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
+    https://huggingface.co/Lykon/dreamshaper-xl-v2-turbo/resolve/main/DreamShaperXL_Turbo_v2.safetensors || \
+    wget -O /comfyui/models/checkpoints/dreamshaper_xl.safetensors \
+    https://huggingface.co/Lykon/dreamshaper-xl-v2-turbo/resolve/main/DreamShaperXL_Turbo_v2.safetensors
 
 # Chequeo final (aparece en logs del build para verificar que todo se descargó bien)
 RUN echo "Modelos descargados en checkpoints:" && \
