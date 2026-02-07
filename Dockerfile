@@ -7,19 +7,21 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
-# Crear carpetas necesarias
+# Crear carpetas necesarias (buena práctica, aunque en la base ya existan)
 RUN mkdir -p /comfyui/models/checkpoints \
     && mkdir -p /comfyui/models/vae
 
 # CyberRealistic Pony v16.0 (~12.9 GB)
 # Pony-based, semi-realistic + estilos flexibles
-RUN curl -L --fail --retry 3 --retry-delay 5 \
-    -H "Referer: https://civitai.com" \
-    -o /comfyui/models/checkpoints/CyberRealistic.Pony.safetensors \
-    https://civitai.com/api/download/models/2581228?type=Model&format=SafeTensor&size=full&fp=fp32 \
-    || { echo "ERROR: Falló la descarga de CyberRealistic Pony"; exit 1; }
+ARG CIVITAI_API_KEY
 
-# Verificación en logs del build
+# Descarga con token como query parameter (método recomendado por Civitai)
+RUN curl -L --fail --retry 3 --retry-delay 5 \
+    -o /comfyui/models/checkpoints/CyberRealistic.Pony.safetensors \
+    "https://civitai.com/api/download/models/2581228?type=Model&format=SafeTensor&size=full&fp=fp32&token=${CIVITAI_API_KEY}" \
+    || { echo "ERROR: Falló la descarga - verifica que CIVITAI_API_KEY sea válido y que el modelo requiera login."; exit 1; }
+
+# Verificación en logs del build (muy útil para depurar)
 RUN echo "=========================================" && \
     echo "Modelos en checkpoints:" && \
     ls -lh /comfyui/models/checkpoints/ && \
