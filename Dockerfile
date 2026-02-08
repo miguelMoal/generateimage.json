@@ -10,5 +10,6 @@ RUN apt-get update && \
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
+
 # Usamos ENTRYPOINT para ejecutar nuestro script al iniciar el contenedor
 ENTRYPOINT ["/start.sh"]
