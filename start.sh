@@ -14,18 +14,34 @@ mkdir -p /comfyui/models/checkpoints \
          /comfyui/models/embeddings
 
 # Crea symlinks (enlaces simbólicos) para que ComfyUI vea los archivos en sus rutas normales
-# El * hace que linkee todos los archivos de la carpeta del volume
-ln -sfn /runpod-volume/models/checkpoints/* /comfyui/models/checkpoints/ 2>/dev/null || true
-ln -sfn /runpod-volume/models/vae/*         /comfyui/models/vae/         2>/dev/null || true
-ln -sfn /runpod-volume/models/loras/*       /comfyui/models/loras/       2>/dev/null || true
-# Agrega más si usas controlnet, embeddings, unet, etc.
-# ln -sfn /runpod-volume/models/controlnet/* /comfyui/models/controlnet/ 2>/dev/null || true
+echo "Creando symlinks a modelos..."
+ln -sf /runpod-volume/models/checkpoints/* /comfyui/models/checkpoints/ 2>/dev/null || echo "No hay checkpoints en el volume"
+ln -sf /runpod-volume/models/vae/* /comfyui/models/vae/ 2>/dev/null || echo "No hay VAEs en el volume"
+ln -sf /runpod-volume/models/loras/* /comfyui/models/loras/ 2>/dev/null || echo "No hay LoRAs en el volume"
 
-# Opcional: symlink completo de toda la carpeta models (más simple y cubre todo)
-# rm -rf /comfyui/models && ln -s /runpod-volume/models /comfyui/models
+# Muestra qué modelos se han enlazado
+echo "Modelos disponibles en /comfyui/models/checkpoints/:"
+ls -la /comfyui/models/checkpoints/ 2>/dev/null || echo "Carpeta vacía"
 
 echo "Symlinks creados. Modelos deberían cargarse desde /runpod-volume."
 
-# Ejecuta el script de inicio original del worker-comfyui base
-# (normalmente lanza el handler de RunPod + el server de ComfyUI)
-exec /start.sh
+# EJECUTAR EL HANDLER ORIGINAL DEL WORKER DE RUNPOD
+# Busca el script original del worker (puede estar en varias ubicaciones)
+echo "Buscando handler original de RunPod..."
+
+# Opción 1: Si usas la imagen base runpod/worker-comfyui
+if [ -f "/handler.py" ]; then
+    echo "Ejecutando handler.py original..."
+    exec python /handler.py
+elif [ -f "/app/handler.py" ]; then
+    echo "Ejecutando /app/handler.py original..."
+    exec python /app/handler.py
+elif [ -f "/worker/handler.py" ]; then
+    echo "Ejecutando /worker/handler.py original..."
+    exec python /worker/handler.py
+else
+    echo "ERROR: No se encontró handler.py. Buscando alternativas..."
+    # Busca cualquier handler en el sistema
+    find / -name "handler.py" 2>/dev/null | head -5
+    exit 1
+fi
