@@ -1,95 +1,31 @@
 #!/usr/bin/env bash
 
-set -euo pipefail  # Mejora la robustez: error en variables no definidas y pipes
+echo "Iniciando worker ComfyUI custom con Network Volume..."
 
-# ────────────────────────────────────────────────────────────────
-# CONFIGURACIÓN - Rutas y nombre del modelo
-# ────────────────────────────────────────────────────────────────
-readonly VOLUME_BASE="/runpod-volume"
-readonly VOLUME_MODELS_DIR="${VOLUME_BASE}/models/checkpoints"
-readonly COMFY_MODELS_DIR="/comfyui/models/checkpoints"
+# Opcional: imprime info útil en logs para debug
+echo "Ruta del volume: /runpod-volume"
+ls -la /runpod-volume || echo "No se ve el volume aún..."
 
-readonly MODEL_FILENAME="cyberRealisticPony_v160.safetensors"
-readonly VOLUME_MODEL_PATH="${VOLUME_MODELS_DIR}/${MODEL_FILENAME}"
-readonly COMFY_MODEL_PATH="${COMFY_MODELS_DIR}/${MODEL_FILENAME}"
+# Crea las carpetas locales si no existen (por seguridad)
+mkdir -p /comfyui/models/checkpoints \
+         /comfyui/models/vae \
+         /comfyui/models/loras \
+         /comfyui/models/controlnet \
+         /comfyui/models/embeddings
 
-readonly DOWNLOAD_URL="https://civitai.com/api/download/models/2581228?type=Model&format=SafeTensor&size=pruned&fp=fp16"
+# Crea symlinks (enlaces simbólicos) para que ComfyUI vea los archivos en sus rutas normales
+# El * hace que linkee todos los archivos de la carpeta del volume
+ln -sfn /runpod-volume/models/checkpoints/* /comfyui/models/checkpoints/ 2>/dev/null || true
+ln -sfn /runpod-volume/models/vae/*         /comfyui/models/vae/         2>/dev/null || true
+ln -sfn /runpod-volume/models/loras/*       /comfyui/models/loras/       2>/dev/null || true
+# Agrega más si usas controlnet, embeddings, unet, etc.
+# ln -sfn /runpod-volume/models/controlnet/* /comfyui/models/controlnet/ 2>/dev/null || true
 
-# ────────────────────────────────────────────────────────────────
-# Preparar directorios
-# ────────────────────────────────────────────────────────────────
-mkdir -p "${COMFY_MODELS_DIR}" "${VOLUME_MODELS_DIR}"
+# Opcional: symlink completo de toda la carpeta models (más simple y cubre todo)
+# rm -rf /comfyui/models && ln -s /runpod-volume/models /comfyui/models
 
-echo "[START] Iniciando script de arranque - $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Symlinks creados. Modelos deberían cargarse desde /runpod-volume."
 
-# ────────────────────────────────────────────────────────────────
-# Verificar / Descargar modelo (solo la primera vez)
-# ────────────────────────────────────────────────────────────────
-if [ -f "${VOLUME_MODEL_PATH}" ]; then
-    echo "[INFO] Modelo ya existe en Network Volume"
-    echo "       → ${VOLUME_MODEL_PATH}"
-    echo "       → Tamaño: $(du -h "${VOLUME_MODEL_PATH}" | cut -f1)"
-else
-    echo "[INFO] Modelo NO encontrado en Network Volume"
-    echo "       → Descargando una sola vez a: ${VOLUME_MODEL_PATH}"
-
-    if [ -z "${CIVITAI_API_KEY:-}" ]; then
-        echo "[ERROR] Variable CIVITAI_API_KEY no está definida"
-        echo "        → Agrega en RunPod Serverless > Settings > Environment Variables"
-        echo "        → Key: CIVITAI_API_KEY    Value: tu-api-key-de-civitai"
-        exit 1
-    fi
-
-    echo "[INFO] Iniciando descarga autenticada..."
-
-    # Intento 1: usando header Authorization Bearer (recomendado)
-    if wget --content-disposition \
-            --header="Authorization: Bearer ${CIVITAI_API_KEY}" \
-            --show-progress \
-            -O "${VOLUME_MODEL_PATH}" \
-            "${DOWNLOAD_URL}"; then
-        echo "[SUCCESS] Descarga completada (método Bearer)"
-    else
-        # Intento 2: fallback con parámetro ?token=
-        echo "[WARN] Método Bearer falló → intentando con ?token=..."
-        if wget --content-disposition \
-                --show-progress \
-                -O "${VOLUME_MODEL_PATH}" \
-                "${DOWNLOAD_URL}&token=${CIVITAI_API_KEY}"; then
-            echo "[SUCCESS] Descarga completada (método ?token=)"
-        else
-            echo "[ERROR] Falló la descarga en ambos métodos"
-            echo "        → Verifica tu API key y conexión"
-            echo "        → Tamaño esperado: ~2-8 GB (pruned fp16)"
-            exit 1
-        fi
-    fi
-
-    echo "[INFO] Archivo descargado:"
-    ls -lh "${VOLUME_MODEL_PATH}"
-fi
-
-# ────────────────────────────────────────────────────────────────
-# Crear symlink para que ComfyUI lo encuentre
-# ────────────────────────────────────────────────────────────────
-ln -sfn "${VOLUME_MODEL_PATH}" "${COMFY_MODEL_PATH}"
-
-if [ -L "${COMFY_MODEL_PATH}" ] && [ "$(readlink -f "${COMFY_MODEL_PATH}")" = "${VOLUME_MODEL_PATH}" ]; then
-    echo "[SUCCESS] Symlink creado correctamente"
-    echo "          ${COMFY_MODEL_PATH} → ${VOLUME_MODEL_PATH}"
-else
-    echo "[ERROR] Falló al crear el symlink"
-    exit 1
-fi
-
-# Debug rápido
-echo "[DEBUG] Contenido de checkpoints en ComfyUI:"
-ls -lh "${COMFY_MODELS_DIR}"
-
-# ────────────────────────────────────────────────────────────────
-# Iniciar el worker de RunPod / ComfyUI
-# ────────────────────────────────────────────────────────────────
-echo "[INFO] Finalizando script de arranque - iniciando ComfyUI..."
-echo "────────────────────────────────────────────────────────────────"
-
+# Ejecuta el script de inicio original del worker-comfyui base
+# (normalmente lanza el handler de RunPod + el server de ComfyUI)
 exec /start.sh
