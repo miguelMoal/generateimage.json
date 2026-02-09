@@ -11,8 +11,7 @@ ls -la /comfyui/models/checkpoints/ 2>/dev/null | head -5
 
 # 2. INICIAR COMFYUI EN SEGUNDO PLANO
 echo "=== INICIANDO COMFYUI SERVER ==="
-cd /comfyui
-
+cd /comfyuiß
 # Iniciar ComfyUI en background con los parámetros CORRECTOS
 python main.py \
   --listen 127.0.0.1 \
