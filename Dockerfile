@@ -5,6 +5,7 @@ FROM runpod/worker-comfyui:5.5.1-base
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl wget && \
     rm -rf /var/lib/apt/lists/*
+    
 
 # Crear las carpetas de modelos si no existen
 RUN mkdir -p /comfyui/models/checkpoints \
