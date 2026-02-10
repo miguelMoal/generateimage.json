@@ -18,6 +18,9 @@ RUN curl -L \
     && curl -L \
     -o /comfyui/models/checkpoints/DreamShaper.safetensors \
     "https://civitai.com/api/download/models/128713?type=Model&format=SafeTensor&size=pruned&fp=fp16"
+    && curl -L \
+    -o /comfyui/models/checkpoints/RealVisXL.safetensors \
+    "https://civitai.com/api/download/models/798204?type=Model&format=SafeTensor&size=full&fp=fp16"
 
 # Descargar Animagine XL V3.1 - Checkpoint principal
 RUN curl -L \
