@@ -1,5 +1,6 @@
-# Imagen base con ComfyUI + comfy-cli + manager
-FROM runpod/worker-comfyui:5.5.1-base
+# Imagen base con ComfyUI + Flux XL (arquitectura NextDiT 3840)
+# Necesaria para Moody Porn Mix ZIT V9 que usa dimensiones Flux XL
+FROM runpod/worker-comfyui:5.7.1-flux1-dev
 
 # Instalar herramientas básicas para descargas
 RUN apt-get update && \
@@ -11,7 +12,7 @@ RUN apt-get update && \
 RUN mkdir -p /comfyui/models/checkpoints \
     && mkdir -p /comfyui/models/vae
 
-# Descargar Moody Porn Mix - ZIT V9 (ZImageTurbo Checkpoint)
+# Descargar Moody Porn Mix - ZIT V9 (arquitectura Flux XL / NextDiT)
 # https://civitai.com/models/620406/moody-porn-mix
 RUN curl -L \
     -o /comfyui/models/checkpoints/moodyPornMix_zitV9.safetensors \
