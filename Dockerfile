@@ -11,26 +11,11 @@ RUN apt-get update && \
 RUN mkdir -p /comfyui/models/checkpoints \
     && mkdir -p /comfyui/models/vae
 
-# Descargar checkpoints de ejemplo (tus originales)
+# Descargar Moody Porn Mix - ZIT V9 (ZImageTurbo Checkpoint)
+# https://civitai.com/models/620406/moody-porn-mix
 RUN curl -L \
-    -o /comfyui/models/checkpoints/juggernautXL.safetensors \
-    "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16" \
-    && curl -L \
-    -o /comfyui/models/checkpoints/DreamShaper.safetensors \
-    "https://civitai.com/api/download/models/128713?type=Model&format=SafeTensor&size=pruned&fp=fp16" \
-    && curl -L \
-    -o /comfyui/models/checkpoints/RealVisXL.safetensors \
-    "https://civitai.com/api/download/models/798204?type=Model&format=SafeTensor&size=full&fp=fp16"
-
-# Descargar Animagine XL V3.1 - Checkpoint principal
-RUN curl -L \
-    -o /comfyui/models/checkpoints/animagine-xl-v31.safetensors \
-    "https://civitai.com/api/download/models/403131?type=Model&format=SafeTensor&size=full&fp=fp16&token=33e893cf7d1a8522a05809bd10d6ac55"
-
-# Descargar Animagine XL V3.1 - VAE dedicado (recomendado para mejores colores en anime)
-RUN curl -L \
-    -o /comfyui/models/vae/animagine-xl-v31.vae.safetensors \
-    "https://civitai.com/api/download/models/403131?type=VAE&format=SafeTensor&token=33e893cf7d1a8522a05809bd10d6ac55"
+    -o /comfyui/models/checkpoints/moodyPornMix_zitV9.safetensors \
+    "https://civitai.com/api/download/models/2708928?token=6dad8c346283f3f0023ebc9245848383"
 
 # Verificación al final del build (para debuggear si algo falló)
 RUN echo "=== Checkpoints descargados ===" && \
