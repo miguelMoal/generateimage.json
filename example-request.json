@@ -11,12 +11,11 @@
       },
       "2": {
         "inputs": {
-          "clip_name1": "clip_l.safetensors",
-          "clip_name2": "t5xxl_fp8_e4m3fn.safetensors",
-          "type": "flux"
+          "clip_name": "qwen_3_4b_fp8_mixed.safetensors",
+          "type": "qwen_image"
         },
-        "class_type": "DualCLIPLoader",
-        "_meta": { "title": "Load Flux Text Encoders" }
+        "class_type": "CLIPLoader",
+        "_meta": { "title": "Load CLIP (Qwen Z-Image)" }
       },
       "3": {
         "inputs": {
@@ -28,11 +27,9 @@
       "4": {
         "inputs": {
           "clip": ["2", 0],
-          "clip_l": "beautiful, detailed, high quality",
-          "t5xxl": "A beautiful portrait of a woman with natural lighting, highly detailed skin and realistic features",
-          "guidance": 3.5
+          "text": "beautiful, detailed, high quality, A beautiful portrait of a woman with natural lighting, highly detailed skin and realistic features"
         },
-        "class_type": "CLIPTextEncodeFlux",
+        "class_type": "CLIPTextEncode",
         "_meta": { "title": "CLIP Text Encode (Positive)" }
       },
       "5": {
@@ -49,8 +46,8 @@
           "height": 1024,
           "batch_size": 1
         },
-        "class_type": "EmptyLatentImage",
-        "_meta": { "title": "Empty Latent Image" }
+        "class_type": "EmptySD3LatentImage",
+        "_meta": { "title": "Empty SD3 Latent Image" }
       },
       "7": {
         "inputs": {
