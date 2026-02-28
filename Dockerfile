@@ -8,18 +8,16 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
     
 
-# Crear las carpetas de modelos si no existen
-RUN mkdir -p /comfyui/models/checkpoints \
-    && mkdir -p /comfyui/models/vae
+# Crear carpetas de modelos (unet para modelos sin CLIP)
+RUN mkdir -p /comfyui/models/unet
 
-# Descargar Moody Porn Mix - ZIT V9 (arquitectura Flux XL / NextDiT)
+# Descargar Moody Porn Mix - ZIT V9 (solo difusión, sin CLIP)
+# Debe cargarse con UNETLoader + DualCLIPLoader + VAELoader por separado
 # https://civitai.com/models/620406/moody-porn-mix
 RUN curl -L \
-    -o /comfyui/models/checkpoints/moodyPornMix_zitV9.safetensors \
+    -o /comfyui/models/unet/moodyPornMix_zitV9.safetensors \
     "https://civitai.com/api/download/models/2708928?token=6dad8c346283f3f0023ebc9245848383"
 
-# Verificación al final del build (para debuggear si algo falló)
-RUN echo "=== Checkpoints descargados ===" && \
-    ls -lh /comfyui/models/checkpoints/ && \
-    echo "=== VAEs descargados ===" && \
-    ls -lh /comfyui/models/vae/
+# Verificación
+RUN echo "=== UNET/Diffusion models ===" && ls -lh /comfyui/models/unet/ && \
+    echo "=== CLIP (Flux encoders) ===" && ls -lh /comfyui/models/clip/ 2>/dev/null || true
