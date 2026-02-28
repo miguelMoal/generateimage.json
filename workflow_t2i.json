@@ -8,9 +8,9 @@
   "4": {
     "inputs": {
       "clip": ["3", 1],
-      "prompt": "edit the image as described",
+      "prompt": "a beautiful landscape with mountains and a lake",
       "vae": ["3", 2],
-      "image1": ["10", 0],
+      "image1": null,
       "image2": null,
       "image3": null,
       "image4": null,
@@ -67,11 +67,5 @@
       "images": ["8", 0]
     },
     "class_type": "SaveImage"
-  },
-  "10": {
-    "inputs": {
-      "image": "input.png"
-    },
-    "class_type": "LoadImage"
   }
 }

@@ -1,32 +1,32 @@
-# Moody Porn Mix (ZIT V9) - RunPod Serverless
-# Basado en worker-comfyui base + componentes Z-Image-Turbo
-# Nota: runpod/worker-comfyui no publica z-image-turbo; usamos 5.7.1-base y añadimos modelos
-# Modelo: https://civitai.com/models/620406/moody-porn-mix
+# Qwen-Image-Edit-Rapid-AIO v23 para RunPod Serverless
+# Modelo: https://huggingface.co/Phr00t/Qwen-Image-Edit-Rapid-AIO/tree/main/v23
+# Basado en runpod/worker-comfyui
 
-ARG BASE_IMAGE=runpod/worker-comfyui:5.7.1-base
-FROM ${BASE_IMAGE}
+ARG WORKER_VERSION=5.7.1
+FROM runpod/worker-comfyui:${WORKER_VERSION}-base AS base
 
-# Token de CivitAI para descargar modelos (requerido para NSFW)
-ARG CIVITAI_TOKEN=6dad8c346283f3f0023ebc9245848383
-ENV CIVITAI_TOKEN=${CIVITAI_TOKEN}
-
-# Versión FP8 para mejor compatibilidad con UNETLoader (la NF4 puede fallar silenciosamente)
-ARG CIVITAI_MODEL_VERSION=2708941
-ARG MODEL_FILENAME=moodyPornMix_zitV9FP8.safetensors
+# Variables para modelo SFW o NSFW
+ARG QWEN_MODEL_VARIANT=sfw
+# sfw = Qwen-Rapid-AIO-SFW-v23.safetensors
+# nsfw = Qwen-Rapid-AIO-NSFW-v23.safetensors
 
 WORKDIR /comfyui
 
-# Crear directorios para modelos Z-Image-Turbo
-RUN mkdir -p models/diffusion_models models/text_encoders models/vae models/model_patches
+# Crear directorios para modelos
+RUN mkdir -p models/checkpoints models/input
 
-# Descargar componentes Z-Image-Turbo desde HuggingFace (text encoder, VAE)
-RUN wget -q -O models/text_encoders/qwen_3_4b.safetensors \
-    "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors" && \
-    wget -q -O models/vae/ae.safetensors \
-    "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors"
+# Descargar modelo Qwen-Rapid-AIO v23
+RUN if [ "$QWEN_MODEL_VARIANT" = "nsfw" ]; then \
+    wget -q -O models/checkpoints/Qwen-Rapid-AIO-v23.safetensors \
+    https://huggingface.co/Phr00t/Qwen-Image-Edit-Rapid-AIO/resolve/main/v23/Qwen-Rapid-AIO-NSFW-v23.safetensors; \
+  else \
+    wget -q -O models/checkpoints/Qwen-Rapid-AIO-v23.safetensors \
+    https://huggingface.co/Phr00t/Qwen-Image-Edit-Rapid-AIO/resolve/main/v23/Qwen-Rapid-AIO-SFW-v23.safetensors; \
+  fi
 
-# Descargar Moody Porn Mix desde CivitAI
-RUN wget -q -L --header="Authorization: Bearer ${CIVITAI_TOKEN}" \
-    -O "models/diffusion_models/${MODEL_FILENAME}" \
-    "https://civitai.com/api/download/models/${CIVITAI_MODEL_VERSION}?token=${CIVITAI_TOKEN}" && \
-    echo "Modelo Moody Porn Mix descargado correctamente"
+# Instalar custom nodes para Qwen Image Edit (TextEncodeQwenImageEditPlus)
+# El modelo Rapid-AIO usa CheckpointLoaderSimple + TextEncodeQwenImageEditPlus
+RUN comfy node install --mode=remote Comfyui-QwenEditUtils 2>/dev/null || \
+    (cd /comfyui/custom_nodes && git clone --depth 1 https://github.com/lrzjason/Comfyui-QwenEditUtils.git Comfyui-QwenEditUtils)
+
+WORKDIR /
