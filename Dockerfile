@@ -17,11 +17,11 @@ RUN curl -L \
     "https://civitai.com/api/download/models/2708928?token=6dad8c346283f3f0023ebc9245848383"
 
 # Text encoder Qwen 3 4B para Z-Image (2560 dim - compatible con Moody ZIT)
-# El UNet de Moody espera embeddings de 2560 dim, Flux produce 4096 (incompatible)
+# Usar versión BF16 estándar: fp8_mixed puede usar nvfp4 no soportado por flux1-dev
 # https://huggingface.co/Comfy-Org/z_image_turbo
 RUN curl -L \
-    -o /comfyui/models/text_encoders/qwen_3_4b_fp8_mixed.safetensors \
-    "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/text_encoders/qwen_3_4b_fp8_mixed.safetensors"
+    -o /comfyui/models/text_encoders/qwen_3_4b.safetensors \
+    "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors"
 
 # VAE ae.safetensors ya incluido en la imagen base (compatible Flux/Z-Image)
 

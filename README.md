@@ -13,7 +13,7 @@ Moody Porn Mix **no incluye CLIP/text encoder**. El workflow debe usar nodos sep
 | Nodo | Función | Parámetros |
 |------|---------|------------|
 | **UNETLoader** | Cargar el modelo de difusión | `unet_name`: `moodyPornMix_zitV9.safetensors` |
-| **CLIPLoader** | Cargar text encoder Qwen (Z-Image) | `clip_name`: `qwen_3_4b_fp8_mixed.safetensors`, `type`: `qwen_image` |
+| **CLIPLoader** | Cargar text encoder Qwen (Z-Image) | `clip_name`: `qwen_3_4b.safetensors`, `type`: `qwen_image` |
 | **VAELoader** | Cargar VAE | `ae.safetensors` |
 | **CLIPTextEncode** | Codificar prompts | Conectar CLIP del CLIPLoader |
 
