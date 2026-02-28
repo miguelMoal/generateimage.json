@@ -62,7 +62,8 @@
   },
   "9": {
     "inputs": {
-      "model": ["3", 0]
+      "model": ["3", 0],
+      "shift": 3
     },
     "class_type": "ModelSamplingAuraFlow",
     "_meta": { "title": "ModelSamplingAuraFlow" }
