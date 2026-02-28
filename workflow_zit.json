@@ -58,8 +58,8 @@
   },
   "28": {
     "inputs": {
-      "unet_name": "moodyPornMix_zitV9.safetensors",
-      "weight_dtype": "default"
+"unet_name": "moodyPornMix_zitV9FP8.safetensors",
+    "weight_dtype": "fp8_e4m3fn"
     },
     "class_type": "UNETLoader",
     "_meta": { "title": "Load Diffusion Model" }

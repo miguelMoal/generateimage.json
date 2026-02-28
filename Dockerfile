@@ -10,9 +10,9 @@ FROM ${BASE_IMAGE}
 ARG CIVITAI_TOKEN=6dad8c346283f3f0023ebc9245848383
 ENV CIVITAI_TOKEN=${CIVITAI_TOKEN}
 
-# ID de la versión del modelo en CivitAI (ZIT V9)
-ARG CIVITAI_MODEL_VERSION=2708928
-ARG MODEL_FILENAME=moodyPornMix_zitV9.safetensors
+# Versión FP8 para mejor compatibilidad con UNETLoader (la NF4 puede fallar silenciosamente)
+ARG CIVITAI_MODEL_VERSION=2708941
+ARG MODEL_FILENAME=moodyPornMix_zitV9FP8.safetensors
 
 WORKDIR /comfyui
 
