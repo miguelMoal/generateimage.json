@@ -1,30 +1,30 @@
-# Moody Porn Mix ZIT V9 usa arquitectura Z-Image (2560 dim), NO Flux (4096 dim).
-# Requiere CLIP Qwen (qwen_3_4b), no DualCLIPLoader con clip_l + t5xxl.
-FROM runpod/worker-comfyui:5.7.1-flux1-dev
+# Moody Porn Mix (ZIT V9) - RunPod Serverless
+# Basado en worker-comfyui con modelo de CivitAI
+# Modelo: https://civitai.com/models/620406/moody-porn-mix
 
-# Instalar herramientas básicas para descargas
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl wget && \
-    rm -rf /var/lib/apt/lists/*
+ARG BASE_IMAGE=runpod/worker-comfyui:latest-z-image-turbo
+FROM ${BASE_IMAGE}
 
-# Crear carpetas de modelos
-RUN mkdir -p /comfyui/models/unet /comfyui/models/text_encoders
+# Token de CivitAI para descargar modelos (requerido para NSFW)
+ARG CIVITAI_TOKEN=6dad8c346283f3f0023ebc9245848383
+ENV CIVITAI_TOKEN=${CIVITAI_TOKEN}
 
-# Moody Porn Mix - ZIT V9 (solo UNet, sin CLIP)
-# https://civitai.com/models/620406/moody-porn-mix
-RUN curl -L \
-    -o /comfyui/models/unet/moodyPornMix_zitV9.safetensors \
-    "https://civitai.com/api/download/models/2708928?token=6dad8c346283f3f0023ebc9245848383"
+# ID de la versión del modelo en CivitAI (ZIT V9)
+ARG CIVITAI_MODEL_VERSION=2708928
+ARG MODEL_FILENAME=moodyPornMix_zitV9.safetensors
 
-# Text encoder Qwen 3 4B para Z-Image (2560 dim - compatible con Moody ZIT)
-# Usar versión BF16 estándar: fp8_mixed puede usar nvfp4 no soportado por flux1-dev
-# https://huggingface.co/Comfy-Org/z_image_turbo
-RUN curl -L \
-    -o /comfyui/models/text_encoders/qwen_3_4b.safetensors \
-    "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors"
+WORKDIR /comfyui
 
-# VAE ae.safetensors ya incluido en la imagen base (compatible Flux/Z-Image)
-
-# Verificación
-RUN echo "=== UNET ===" && ls -lh /comfyui/models/unet/ && \
-    echo "=== Text encoders (Z-Image) ===" && ls -lh /comfyui/models/text_encoders/
+# Descargar Moody Porn Mix desde CivitAI
+# La API redirige a una URL firmada; wget -L sigue redirects
+RUN if [ -n "$CIVITAI_TOKEN" ]; then \
+    wget -q -L --header="Authorization: Bearer ${CIVITAI_TOKEN}" \
+         -O "models/diffusion_models/${MODEL_FILENAME}" \
+         "https://civitai.com/api/download/models/${CIVITAI_MODEL_VERSION}?token=${CIVITAI_TOKEN}"; \
+    echo "Modelo Moody Porn Mix descargado correctamente"; \
+else \
+    echo "ERROR: CIVITAI_TOKEN es requerido para descargar el modelo. "; \
+    echo "Obtén tu token en https://civitai.com/user/account"; \
+    echo "Build con: docker build --build-arg CIVITAI_TOKEN=tu_token ."; \
+    exit 1; \
+fi

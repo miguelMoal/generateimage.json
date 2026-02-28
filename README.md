@@ -1,41 +1,98 @@
-# generateimage.json
+# Moody Porn Mix (ZIT V9) - RunPod Serverless
 
-Dockerized ComfyUI workflow con Moody Porn Mix ZIT V9.
+Despliegue del modelo [Moody Porn Mix ZIT V9](https://civitai.com/models/620406/moody-porn-mix) en RunPod Serverless con ComfyUI.
 
-## Arquitectura: Z-Image (2560 dim), no Flux
+## Requisitos
 
-Moody Porn Mix ZIT V9 usa arquitectura **Z-Image** con embeddings de **2560 dimensiones**. Es incompatible con Flux (4096 dim). El workflow debe usar el text encoder **Qwen**, no DualCLIPLoader con clip_l + t5xxl.
+- Cuenta en [RunPod](https://www.runpod.io/)
+- Token de CivitAI para descargar el modelo (crear en [CivitAI User Account](https://civitai.com/user/account))
+- Repositorio Git (GitHub, GitLab, etc.)
 
-## Estructura del workflow requerida
+## Despliegue desde Git (RunPod)
 
-Moody Porn Mix **no incluye CLIP/text encoder**. El workflow debe usar nodos separados:
+1. **Prepara el token de CivitAI**
+   - Ve a https://civitai.com/user/account
+   - Crea un API token
+   - Guárdalo de forma segura
 
-| Nodo | Función | Parámetros |
-|------|---------|------------|
-| **UNETLoader** | Cargar el modelo de difusión | `unet_name`: `moodyPornMix_zitV9.safetensors` |
-| **CLIPLoader** | Cargar text encoder Qwen (Z-Image) | `clip_name`: `qwen_3_4b.safetensors`, `type`: `qwen_image` |
-| **VAELoader** | Cargar VAE | `ae.safetensors` |
-| **CLIPTextEncode** | Codificar prompts | Conectar CLIP del CLIPLoader |
+2. **En RunPod Console**
+   - Ve a [Serverless → New Endpoint](https://console.runpod.io/serverless/new-endpoint)
+   - Selecciona **"GitHub Repo"** como origen
+   - Conecta tu cuenta de GitHub y elige este repositorio
+   - En **Build Arguments** añade:
+     - `CIVITAI_TOKEN`: tu token de CivitAI
+   - Configura GPU recomendada: **RTX 4090** o **A100** (24GB+ VRAM)
+   - Click **Deploy Endpoint**
 
-**No usar** DualCLIPLoader + CLIPTextEncodeFlux (Flux) — produce 4096 dim y provoca el error "expected input with shape [*, 2560], but got input of size[1, 256, 4096]".
+3. **Build manual con Docker**
 
-Guía para Z-Image Turbo: 8–10 steps, CFG 1.0, DPM++ 2M Karras o euler_ancestral.
+   ```bash
+   docker build \
+     --build-arg CIVITAI_TOKEN=tu_token_aqui \
+     -t moody-zit-runpod:latest .
+   ```
 
-## Contents
+   Luego sube la imagen a tu registry y crea el endpoint en RunPod apuntando a esa imagen.
 
-- `Dockerfile` - Docker container configuration for running this ComfyUI workflow
-- `example-request.json` - Example API request payload for testing
+## Uso de la API
 
-## Usage
+El endpoint expone la API estándar de RunPod Serverless. Ejemplo con `test_input.json`:
 
 ```bash
-# Build the Docker image
-docker build -t generateimage.json .
-
-# Run the container
-docker run -p 8188:8188 generateimage.json
+curl -X POST https://api.runpod.ai/v2/TU_ENDPOINT_ID/runsync \
+  -H "Authorization: Bearer TU_RUNPOD_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @test_input.json
 ```
 
-## API Request Example
+### Text-to-Image (txt2img)
 
-See `example-request.json` for a ready-to-use API request payload.
+Modifica el nodo `"27"` (CLIPTextEncode) en el workflow para cambiar el prompt:
+
+```json
+"27": {
+  "inputs": {
+    "clip": ["30", 0],
+    "text": "tu prompt aqui, 19 years old woman, photorealistic..."
+  },
+  ...
+}
+```
+
+### Image-to-Image (img2img)
+
+Genera variaciones a partir de una imagen de entrada. Usa `test_input_img2img.json`:
+
+```bash
+curl -X POST https://api.runpod.ai/v2/TU_ENDPOINT_ID/runsync \
+  -H "Authorization: Bearer TU_RUNPOD_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @test_input_img2img.json
+```
+
+- **Imagen de entrada**: Envía la imagen en `input.images[0]` con `name: "input.png"` y `image` en base64.
+- **Denoise**: Controla cuánto cambia la imagen (nodo `"10"`). `0.35` = cambio moderado; `0.1` = cambio suave; `0.5` = cambio fuerte.
+- **Prompt**: Edita el nodo `"6"` para el prompt positivo.
+
+### Parámetros recomendados (Z-Image-Turbo)
+
+- **Steps**: 6-8 (no más; es un modelo turbo)
+- **CFG**: 1.0
+- **Resolución**: hasta 2048x2048
+- **Img2img denoise**: 0.1–0.4 (menor = más fiel a la imagen original)
+
+## Archivos
+
+- `Dockerfile`: Imagen basada en `runpod/worker-comfyui:z-image-turbo` + descarga del modelo Moody
+- `workflow_zit.json`: Workflow text-to-image
+- `workflow_img2img.json`: Workflow image-to-image
+- `test_input.json`: Ejemplo txt2img
+- `test_input_img2img.json`: Ejemplo img2img (incluye imagen placeholder; reemplaza con tu imagen en base64)
+
+## Modelo
+
+- **Nombre**: Moody Porn Mix ZIT V9
+- **Base**: ZImageTurbo
+- **CivitAI**: https://civitai.com/models/620406/moody-porn-mix
+- **Formato**: SafeTensors (~12GB)
+- **NSFW**: El modelo genera contenido adulto. Requiere token de CivitAI para descarga.
