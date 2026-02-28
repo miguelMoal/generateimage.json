@@ -7,7 +7,7 @@ Implementación del modelo [Phr00t/Qwen-Image-Edit-Rapid-AIO v23](https://huggin
 - **Text-to-Image** y **Image-to-Image** en un solo checkpoint
 - 4 pasos con 1 CFG (optimizado Lightning)
 - FP8, ~28 GB por variante
-- Variantes: **SFW** (por defecto) y **NSFW**
+- Variantes: **SFW** y **NSFW** (por defecto)
 
 ## Despliegue desde Git (RunPod)
 
@@ -22,11 +22,11 @@ Implementación del modelo [Phr00t/Qwen-Image-Edit-Rapid-AIO v23](https://huggin
 ## Build local (opcional)
 
 ```bash
-# Variante SFW (por defecto)
+# Variante NSFW (por defecto)
 docker build -t qwen-rapid-aio-runpod .
 
-# Variante NSFW
-docker build --build-arg QWEN_MODEL_VARIANT=nsfw -t qwen-rapid-aio-runpod-nsfw .
+# Variante SFW
+docker build --build-arg QWEN_MODEL_VARIANT=sfw -t qwen-rapid-aio-runpod-sfw .
 ```
 
 ## Uso de la API

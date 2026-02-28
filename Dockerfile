@@ -6,7 +6,7 @@ ARG WORKER_VERSION=5.7.1
 FROM runpod/worker-comfyui:${WORKER_VERSION}-base AS base
 
 # Variables para modelo SFW o NSFW
-ARG QWEN_MODEL_VARIANT=sfw
+ARG QWEN_MODEL_VARIANT=nsfw
 # sfw = Qwen-Rapid-AIO-SFW-v23.safetensors
 # nsfw = Qwen-Rapid-AIO-NSFW-v23.safetensors
 
