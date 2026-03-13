@@ -6,6 +6,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
 
+# Handler y módulos requeridos por RunPod (deploy desde GitHub)
+COPY handler.py /handler.py
+COPY network_volume.py /network_volume.py
+
 # Script de descarga condicional (solo si no existen en el volumen)
 COPY download-models.sh /download-models.sh
 RUN chmod +x /download-models.sh
@@ -15,3 +19,4 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/start.sh"]
