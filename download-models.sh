@@ -35,11 +35,11 @@ download_if_missing "$CHECKPOINTS_DIR/DreamShaper.safetensors" \
 download_if_missing "$CHECKPOINTS_DIR/RealVisXL.safetensors" \
     "https://civitai.com/api/download/models/798204?type=Model&format=SafeTensor&size=full&fp=fp16"
 download_if_missing "$CHECKPOINTS_DIR/animagine-xl-v31.safetensors" \
-    "https://civitai.com/api/download/models/403131?type=Model&format=SafeTensor&size=full&fp=fp16&token=33e893cf7d1a8522a05809bd10d6ac55"
+    "https://civitai.com/api/download/models/403131?type=Model&format=SafeTensor&size=full&fp=fp16&token=0477087baae314d91716cb4ec3bbfddd"
 
 # VAE
 download_if_missing "$VAE_DIR/animagine-xl-v31.vae.safetensors" \
-    "https://civitai.com/api/download/models/403131?type=VAE&format=SafeTensor&token=33e893cf7d1a8522a05809bd10d6ac55"
+    "https://civitai.com/api/download/models/403131?type=VAE&format=SafeTensor&token=0477087baae314d91716cb4ec3bbfddd"
 
 # RunPod serverless: extra_model_paths.yaml ya apunta a /runpod-volume/models/
 echo "=== Modelos listos ==="
