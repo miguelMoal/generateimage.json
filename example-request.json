@@ -19,7 +19,7 @@
       "4": {
         "class_type": "CheckpointLoaderSimple",
         "inputs": {
-          "ckpt_name": "animagine-xl-v31.safetensors"
+          "ckpt_name": "animagine-xl-3.1.safetensors"
         }
       },
       "5": {
@@ -47,7 +47,7 @@
       "10": {
         "class_type": "VAELoader",
         "inputs": {
-          "vae_name": "animagine-xl-v31.vae.safetensors"
+          "vae_name": "diffusion_pytorch_model.safetensors"
         }
       },
       "8": {

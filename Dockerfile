@@ -7,10 +7,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
     
 
-# Crear carpetas y descargar solo Animagine XL V3.1 (checkpoint + VAE)
+# Animagine XL 3.1: checkpoint + VAE (Diffusers) desde Hugging Face (mig1234/animagine-xl-3.1)
 RUN mkdir -p /comfyui/models/checkpoints /comfyui/models/vae \
-    && curl -L -o /comfyui/models/checkpoints/animagine-xl-v31.safetensors \
-    "https://civitai.com/api/download/models/403131?type=Model&format=SafeTensor&size=full&fp=fp16&token=0477087baae314d91716cb4ec3bbfddd" \
-    && curl -L -o /comfyui/models/vae/animagine-xl-v31.vae.safetensors \
-    "https://civitai.com/api/download/models/403131?type=VAE&format=SafeTensor&token=0477087baae314d91716cb4ec3bbfddd" \
+    && curl -fL -o /comfyui/models/checkpoints/animagine-xl-3.1.safetensors \
+    "https://huggingface.co/mig1234/animagine-xl-3.1/resolve/main/animagine-xl-3.1.safetensors" \
+    && curl -fL -o /comfyui/models/vae/diffusion_pytorch_model.safetensors \
+    "https://huggingface.co/mig1234/animagine-xl-3.1/resolve/main/vae/diffusion_pytorch_model.safetensors" \
     && echo "=== Modelos descargados ===" && ls -lh /comfyui/models/checkpoints/ && ls -lh /comfyui/models/vae/
