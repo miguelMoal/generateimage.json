@@ -26,8 +26,9 @@ download_if_missing() {
 
 echo "=== Comprobando modelos (volumen: $MODELS_BASE) ==="
 
+# Checkpoint: https://huggingface.co/mig1234/Juggernaut-XL (juggernautXL_version2.safetensors)
 download_if_missing "$CHECKPOINTS_DIR/juggernautXL.safetensors" \
-    "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16"
+    "https://huggingface.co/mig1234/Juggernaut-XL/resolve/main/juggernautXL_version2.safetensors"
 
 # RunPod serverless: extra_model_paths.yaml ya apunta a /runpod-volume/models/
 echo "=== Modelos listos ==="
