@@ -9,7 +9,6 @@ else
     MODELS_BASE="${MODELS_PATH:-/comfyui/models}"
 fi
 CHECKPOINTS_DIR="${MODELS_BASE}/checkpoints"
-VAE_DIR="${MODELS_BASE}/vae"
 
 download_if_missing() {
     local filepath="$1"
@@ -27,19 +26,8 @@ download_if_missing() {
 
 echo "=== Comprobando modelos (volumen: $MODELS_BASE) ==="
 
-# Checkpoints
-download_if_missing "$CHECKPOINTS_DIR/juggernautXL.safetensors" \
-    "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16"
-download_if_missing "$CHECKPOINTS_DIR/DreamShaper.safetensors" \
-    "https://civitai.com/api/download/models/128713?type=Model&format=SafeTensor&size=pruned&fp=fp16"
 download_if_missing "$CHECKPOINTS_DIR/RealVisXL.safetensors" \
     "https://civitai.com/api/download/models/798204?type=Model&format=SafeTensor&size=full&fp=fp16"
-download_if_missing "$CHECKPOINTS_DIR/animagine-xl-v31.safetensors" \
-    "https://civitai.com/api/download/models/403131?type=Model&format=SafeTensor&size=full&fp=fp16&token=0477087baae314d91716cb4ec3bbfddd"
-
-# VAE
-download_if_missing "$VAE_DIR/animagine-xl-v31.vae.safetensors" \
-    "https://civitai.com/api/download/models/403131?type=VAE&format=SafeTensor&token=0477087baae314d91716cb4ec3bbfddd"
 
 # RunPod serverless: extra_model_paths.yaml ya apunta a /runpod-volume/models/
 echo "=== Modelos listos ==="
