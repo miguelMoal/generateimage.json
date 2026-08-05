@@ -12,6 +12,7 @@ from pathlib import Path
 import modal
 import requests
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 APP_NAME = "main"
@@ -74,6 +75,12 @@ image = (
 
 app = modal.App(APP_NAME, image=image)
 web_app = FastAPI()
+web_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def wait_for_port(port: int, timeout: int = 300) -> None:
