@@ -1,0 +1,6 @@
+modal>=1.0.0
+comfy-cli
+huggingface_hub[hf_transfer]
+fastapi
+websocket-client
+requests
