@@ -176,6 +176,21 @@ def wait_for_port(port: int, timeout: int = 300) -> None:
     raise TimeoutError(f"ComfyUI no respondió en el puerto {port}")
 
 
+def wait_for_comfy(timeout: int = 300) -> None:
+    deadline = time.time() + timeout
+    last_error = ""
+    while time.time() < deadline:
+        try:
+            response = requests.get(f"http://{COMFY_HOST}/system_stats", timeout=2)
+            if response.status_code == 200:
+                return
+            last_error = f"HTTP {response.status_code}"
+        except requests.RequestException as exc:
+            last_error = str(exc)
+        time.sleep(0.5)
+    raise TimeoutError(f"ComfyUI no quedó listo: {last_error}")
+
+
 def validate_input(job_input: dict) -> tuple[dict | None, str | None]:
     workflow = job_input.get("workflow")
     if workflow is None:
@@ -200,6 +215,7 @@ def upload_images(images: list[dict]) -> dict:
     if not images:
         return {"status": "success", "details": []}
 
+    INPUT_DIR.mkdir(parents=True, exist_ok=True)
     details = []
     for image in images:
         name = image["name"]
@@ -209,17 +225,13 @@ def upload_images(images: list[dict]) -> dict:
         else:
             base64_data = image_data_uri
 
-        blob = base64.b64decode(base64_data)
-        response = requests.post(
-            f"http://{COMFY_HOST}/upload/image",
-            files={"image": (name, blob)},
-            data={"overwrite": "true"},
-            timeout=60,
-        )
-        if response.status_code != 200:
-            details.append({"name": name, "error": response.text})
-        else:
-            details.append({"name": name, "status": "success"})
+        try:
+            blob = base64.b64decode(base64_data)
+            target = INPUT_DIR / name
+            target.write_bytes(blob)
+            details.append({"name": name, "status": "success", "path": str(target)})
+        except Exception as exc:
+            details.append({"name": name, "error": str(exc)})
 
     if any("error" in detail for detail in details):
         return {"status": "error", "details": details}
@@ -388,6 +400,8 @@ def run_workflow(job_input: dict) -> dict:
                 "details": upload_result["details"],
             }
 
+    wait_for_comfy(timeout=300)
+
     client_id = str(uuid.uuid4())
 
     queued = queue_workflow(
@@ -447,6 +461,23 @@ def _start_comfy_process() -> subprocess.Popen:
     )
 
 
+def _ensure_comfy_running(proc: subprocess.Popen | None) -> subprocess.Popen | None:
+    try:
+        wait_for_comfy(timeout=5)
+        return proc
+    except TimeoutError:
+        if proc is not None and proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+        new_proc = _start_comfy_process()
+        wait_for_port(COMFY_PORT, timeout=900)
+        wait_for_comfy(timeout=300)
+        return new_proc
+
+
 @app.cls(
     gpu=GPU_TYPE,
     volumes={"/cache": vol},
@@ -461,13 +492,15 @@ class QwenComfyWorker:
     def start_comfy(self):
         self.proc = _start_comfy_process()
         wait_for_port(COMFY_PORT, timeout=600)
+        wait_for_comfy(timeout=300)
 
     @modal.enter(snap=False)
     def restore_comfy(self):
-        wait_for_port(COMFY_PORT, timeout=60)
+        self.proc = _ensure_comfy_running(getattr(self, "proc", None))
 
     @modal.method()
     def infer(self, job_input: dict) -> dict:
+        self.proc = _ensure_comfy_running(getattr(self, "proc", None))
         return run_workflow(job_input)
 
     @modal.exit()
@@ -484,22 +517,18 @@ class QwenComfyWorker:
     scaledown_window=180,
     timeout=3600,
     memory=65536,
-    enable_memory_snapshot=True,
-    experimental_options={"enable_gpu_snapshot": True},
 )
-@modal.concurrent(max_inputs=2)
+@modal.concurrent(max_inputs=1)
 class I2vComfyWorker:
-    @modal.enter(snap=True)
+    @modal.enter()
     def start_comfy(self):
         self.proc = _start_comfy_process()
         wait_for_port(COMFY_PORT, timeout=900)
-
-    @modal.enter(snap=False)
-    def restore_comfy(self):
-        wait_for_port(COMFY_PORT, timeout=120)
+        wait_for_comfy(timeout=300)
 
     @modal.method()
     def infer(self, job_input: dict) -> dict:
+        self.proc = _ensure_comfy_running(getattr(self, "proc", None))
         return run_workflow(job_input)
 
     @modal.exit()
