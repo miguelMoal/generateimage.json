@@ -287,7 +287,7 @@ def wait_for_completion(prompt_id: str, timeout: int = 900) -> tuple[bool, list[
 
 def get_image_data(filename: str, subfolder: str, image_type: str) -> bytes | None:
     params = {"filename": filename, "subfolder": subfolder, "type": image_type}
-    response = requests.get(f"http://{COMFY_HOST}/view", params=params, timeout=60)
+    response = requests.get(f"http://{COMFY_HOST}/view", params=params, timeout=300)
     if response.status_code == 200:
         return response.content
     return None
@@ -302,6 +302,43 @@ def media_kind(filename: str) -> str:
     return "image"
 
 
+def _encode_media_file(path: Path, subfolder: str = "") -> dict | None:
+    if not path.is_file():
+        return None
+    return {
+        "filename": path.name,
+        "type": "base64",
+        "kind": media_kind(path.name),
+        "data": base64.b64encode(path.read_bytes()).decode("utf-8"),
+        "subfolder": subfolder,
+    }
+
+
+def collect_media_from_disk(prefix: str = "Wan22_Remix_I2V") -> list[dict]:
+    output_root = COMFY_ROOT / "output"
+    if not output_root.exists():
+        return []
+
+    candidates: list[Path] = []
+    for path in output_root.rglob("*"):
+        if not path.is_file():
+            continue
+        if media_kind(path.name) not in ("video", "gif"):
+            continue
+        if prefix and prefix not in path.name:
+            continue
+        candidates.append(path)
+
+    if not candidates:
+        return []
+
+    newest = max(candidates, key=lambda p: p.stat().st_mtime)
+    relative = newest.relative_to(output_root)
+    subfolder = str(relative.parent) if relative.parent != Path(".") else ""
+    encoded = _encode_media_file(newest, subfolder=subfolder)
+    return [encoded] if encoded else []
+
+
 def collect_media_outputs(outputs: dict, errors: list[str]) -> list[dict]:
     output_data: list[dict] = []
     media_keys = ("images", "gifs", "videos")
@@ -314,7 +351,7 @@ def collect_media_outputs(outputs: dict, errors: list[str]) -> list[dict]:
             for media_info in items:
                 filename = media_info.get("filename")
                 subfolder = media_info.get("subfolder", "")
-                media_type = media_info.get("type")
+                media_type = media_info.get("type") or "output"
                 if media_type == "temp" or not filename:
                     continue
 
@@ -362,7 +399,7 @@ def run_workflow(job_input: dict) -> dict:
     if not prompt_id:
         raise ValueError(f"Missing 'prompt_id' in queue response: {queued}")
 
-    execution_done, errors = wait_for_completion(prompt_id)
+    execution_done, errors = wait_for_completion(prompt_id, timeout=2400)
     if not execution_done:
         if errors:
             return {"error": "Job processing failed", "details": errors}
@@ -376,6 +413,9 @@ def run_workflow(job_input: dict) -> dict:
 
     outputs = history[prompt_id].get("outputs", {})
     output_data = collect_media_outputs(outputs, errors)
+
+    if not any(item["kind"] in ("video", "gif") for item in output_data):
+        output_data.extend(collect_media_from_disk())
 
     if not output_data and errors:
         return {"error": "Job processing failed", "details": errors}
