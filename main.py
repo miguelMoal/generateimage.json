@@ -26,8 +26,62 @@ GPU_TYPE = os.environ.get("MODAL_GPU", "L40S")
 MODEL_FILENAME = "Qwen-Rapid-AIO-v23.safetensors"
 MODEL_HF_FILE = "v23/Qwen-Rapid-AIO-NSFW-v23.safetensors"
 
+DIFFUSION_DIR = COMFY_ROOT / "models" / "diffusion_models"
+TEXT_ENCODERS_DIR = COMFY_ROOT / "models" / "text_encoders"
+VAE_DIR = COMFY_ROOT / "models" / "vae"
+LORAS_DIR = COMFY_ROOT / "models" / "loras"
+
+I2V_FILES = [
+    (
+        "FX-FeiHou/wan2.2-Remix",
+        "NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_fp8_e4m3fn_v3.0.safetensors",
+        DIFFUSION_DIR,
+        "Wan2.2_Remix_NSFW_i2v_high.safetensors",
+    ),
+    (
+        "FX-FeiHou/wan2.2-Remix",
+        "NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_fp8_e4m3fn_v3.0.safetensors",
+        DIFFUSION_DIR,
+        "Wan2.2_Remix_NSFW_i2v_low.safetensors",
+    ),
+    (
+        "NSFW-API/NSFW-Wan-UMT5-XXL",
+        "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
+        TEXT_ENCODERS_DIR,
+        "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
+    ),
+    (
+        "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+        "split_files/vae/wan_2.1_vae.safetensors",
+        VAE_DIR,
+        "wan_2.1_vae.safetensors",
+    ),
+    (
+        "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+        "split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+        LORAS_DIR,
+        "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+    ),
+    (
+        "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+        "split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+        LORAS_DIR,
+        "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+    ),
+]
+
 root_dir = Path(__file__).parent
 vol = modal.Volume.from_name("qwen-rapid-aio-cache", create_if_missing=True)
+i2v_vol = modal.Volume.from_name("wan22-remix-i2v-cache", create_if_missing=True)
+
+
+def _symlink_cached(cached: str, target_dir: Path, filename: str) -> None:
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / filename
+    if target.exists() or target.is_symlink():
+        target.unlink()
+    target.symlink_to(cached)
+    print(f"Model ready at {target}")
 
 
 def download_model():
@@ -38,18 +92,31 @@ def download_model():
         filename=MODEL_HF_FILE,
         cache_dir="/cache",
     )
-
-    CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
-    target = CHECKPOINTS_DIR / MODEL_FILENAME
-    if target.exists() or target.is_symlink():
-        target.unlink()
-    target.symlink_to(cached)
-    print(f"Model ready at {target}")
+    _symlink_cached(cached, CHECKPOINTS_DIR, MODEL_FILENAME)
 
 
-image = (
+def download_i2v_models():
+    from huggingface_hub import hf_hub_download
+
+    for repo_id, filename, target_dir, local_name in I2V_FILES:
+        cached = hf_hub_download(
+            repo_id=repo_id,
+            filename=filename,
+            cache_dir="/cache",
+        )
+        _symlink_cached(cached, target_dir, local_name)
+
+
+_comfy_base = (
     modal.Image.debian_slim(python_version="3.11")
-    .apt_install("git", "git-lfs", "libgl1-mesa-dev", "libglib2.0-0", "wget")
+    .apt_install(
+        "git",
+        "git-lfs",
+        "libgl1-mesa-dev",
+        "libglib2.0-0",
+        "wget",
+        "ffmpeg",
+    )
     .pip_install(
         "comfy-cli",
         "huggingface_hub[hf_transfer]",
@@ -59,7 +126,10 @@ image = (
     )
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
     .run_commands("comfy --skip-prompt install --nvidia --version latest")
-    .run_commands(
+)
+
+image = (
+    _comfy_base.run_commands(
         "wget -q -O /root/comfy/ComfyUI/comfy_extras/nodes_qwen.py "
         "https://huggingface.co/Phr00t/Qwen-Image-Edit-Rapid-AIO/resolve/main/"
         "fixed-textencode-node/nodes_qwen.v2.py"
@@ -71,6 +141,16 @@ image = (
     )
     .run_commands("comfy node install-deps --workflow=/root/workflow_api.json")
     .run_function(download_model, volumes={"/cache": vol})
+)
+
+i2v_image = (
+    _comfy_base.add_local_file(
+        str(root_dir / "workflow_i2v.json"),
+        "/root/workflow_i2v_api.json",
+        copy=True,
+    )
+    .run_commands("comfy node install-deps --workflow=/root/workflow_i2v_api.json")
+    .run_function(download_i2v_models, volumes={"/cache": i2v_vol})
 )
 
 app = modal.App(APP_NAME, image=image)
@@ -213,6 +293,48 @@ def get_image_data(filename: str, subfolder: str, image_type: str) -> bytes | No
     return None
 
 
+def media_kind(filename: str) -> str:
+    lower = filename.lower()
+    if lower.endswith((".mp4", ".webm", ".mov", ".mkv")):
+        return "video"
+    if lower.endswith(".gif"):
+        return "gif"
+    return "image"
+
+
+def collect_media_outputs(outputs: dict, errors: list[str]) -> list[dict]:
+    output_data: list[dict] = []
+    media_keys = ("images", "gifs", "videos")
+
+    for node_output in outputs.values():
+        for key in media_keys:
+            items = node_output.get(key)
+            if not items:
+                continue
+            for media_info in items:
+                filename = media_info.get("filename")
+                subfolder = media_info.get("subfolder", "")
+                media_type = media_info.get("type")
+                if media_type == "temp" or not filename:
+                    continue
+
+                media_bytes = get_image_data(filename, subfolder, media_type)
+                if not media_bytes:
+                    errors.append(f"Failed to fetch media data for {filename}")
+                    continue
+
+                output_data.append(
+                    {
+                        "filename": filename,
+                        "type": "base64",
+                        "kind": media_kind(filename),
+                        "data": base64.b64encode(media_bytes).decode("utf-8"),
+                    }
+                )
+
+    return output_data
+
+
 def run_workflow(job_input: dict) -> dict:
     validated_data, error_message = validate_input(job_input)
     if error_message:
@@ -253,40 +375,36 @@ def run_workflow(job_input: dict) -> dict:
         return {"error": f"Prompt ID {prompt_id} not found in history"}
 
     outputs = history[prompt_id].get("outputs", {})
-    output_data: list[dict] = []
-
-    for node_output in outputs.values():
-        if "images" not in node_output:
-            continue
-        for image_info in node_output["images"]:
-            filename = image_info.get("filename")
-            subfolder = image_info.get("subfolder", "")
-            img_type = image_info.get("type")
-            if img_type == "temp" or not filename:
-                continue
-
-            image_bytes = get_image_data(filename, subfolder, img_type)
-            if not image_bytes:
-                errors.append(f"Failed to fetch image data for {filename}")
-                continue
-
-            output_data.append(
-                {
-                    "filename": filename,
-                    "type": "base64",
-                    "data": base64.b64encode(image_bytes).decode("utf-8"),
-                }
-            )
+    output_data = collect_media_outputs(outputs, errors)
 
     if not output_data and errors:
         return {"error": "Job processing failed", "details": errors}
 
-    result: dict = {"images": output_data}
+    images = [item for item in output_data if item["kind"] == "image"]
+    videos = [item for item in output_data if item["kind"] in ("video", "gif")]
+
+    result: dict = {"images": images, "videos": videos}
     if errors:
         result["errors"] = errors
     if not output_data:
         result["status"] = "success_no_images"
     return result
+
+
+def _start_comfy_process() -> subprocess.Popen:
+    INPUT_DIR.mkdir(parents=True, exist_ok=True)
+    return subprocess.Popen(
+        [
+            "comfy",
+            "launch",
+            "--",
+            "--listen",
+            "0.0.0.0",
+            "--port",
+            str(COMFY_PORT),
+        ],
+        cwd=str(COMFY_ROOT),
+    )
 
 
 @app.cls(
@@ -301,24 +419,44 @@ def run_workflow(job_input: dict) -> dict:
 class QwenComfyWorker:
     @modal.enter(snap=True)
     def start_comfy(self):
-        INPUT_DIR.mkdir(parents=True, exist_ok=True)
-        self.proc = subprocess.Popen(
-            [
-                "comfy",
-                "launch",
-                "--",
-                "--listen",
-                "0.0.0.0",
-                "--port",
-                str(COMFY_PORT),
-            ],
-            cwd=str(COMFY_ROOT),
-        )
+        self.proc = _start_comfy_process()
         wait_for_port(COMFY_PORT, timeout=600)
 
     @modal.enter(snap=False)
     def restore_comfy(self):
         wait_for_port(COMFY_PORT, timeout=60)
+
+    @modal.method()
+    def infer(self, job_input: dict) -> dict:
+        return run_workflow(job_input)
+
+    @modal.exit()
+    def cleanup(self):
+        proc = getattr(self, "proc", None)
+        if proc is not None:
+            proc.terminate()
+
+
+@app.cls(
+    image=i2v_image,
+    gpu=GPU_TYPE,
+    volumes={"/cache": i2v_vol},
+    scaledown_window=180,
+    timeout=3600,
+    memory=65536,
+    enable_memory_snapshot=True,
+    experimental_options={"enable_gpu_snapshot": True},
+)
+@modal.concurrent(max_inputs=2)
+class I2vComfyWorker:
+    @modal.enter(snap=True)
+    def start_comfy(self):
+        self.proc = _start_comfy_process()
+        wait_for_port(COMFY_PORT, timeout=900)
+
+    @modal.enter(snap=False)
+    def restore_comfy(self):
+        wait_for_port(COMFY_PORT, timeout=120)
 
     @modal.method()
     def infer(self, job_input: dict) -> dict:
@@ -351,6 +489,29 @@ async def runsync(body: dict):
 
     try:
         result = QwenComfyWorker().infer.remote(job_input)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    if "error" in result:
+        raise HTTPException(status_code=500, detail=result)
+    return {"status": "COMPLETED", "output": result}
+
+
+@web_app.post("/runsync-i2v")
+async def runsync_i2v(body: dict):
+    job_input = body.get("input")
+    if job_input is None:
+        raise HTTPException(status_code=400, detail="Missing 'input' field")
+
+    images = job_input.get("images") if isinstance(job_input, dict) else None
+    if not images:
+        raise HTTPException(
+            status_code=400,
+            detail="Missing 'images' field: image-to-video requires an input image",
+        )
+
+    try:
+        result = I2vComfyWorker().infer.remote(job_input)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
